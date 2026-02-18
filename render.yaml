@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: solar-system-explorer
+    env: docker
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/planets
+    envVars:
+      - key: GIN_MODE
+        value: release
