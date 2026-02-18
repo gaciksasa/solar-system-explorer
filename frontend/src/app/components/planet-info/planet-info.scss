@@ -1,0 +1,133 @@
+:host {
+  display: block;
+}
+
+.info-panel {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 300px;
+  background: rgba(4, 8, 24, 0.82);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(100, 160, 255, 0.25);
+  border-radius: 14px;
+  padding: 24px;
+  color: #d0dcff;
+  animation: slideIn 0.25s ease-out;
+  z-index: 10;
+
+  @keyframes slideIn {
+    from {
+      transform: translateX(30px);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+}
+
+.close-btn {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  background: transparent;
+  border: none;
+  color: #556688;
+  font-size: 1rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: color 0.2s, background 0.2s;
+
+  &:hover {
+    color: #a0c4ff;
+    background: rgba(100, 160, 255, 0.1);
+  }
+}
+
+.planet-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.planet-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 10px currentColor;
+}
+
+.planet-names {
+  display: flex;
+  flex-direction: column;
+}
+
+.planet-name-sr {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin: 0;
+  color: #c8daff;
+  line-height: 1.2;
+}
+
+.planet-name-en {
+  font-size: 0.75rem;
+  color: #5566aa;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.planet-description {
+  font-size: 0.82rem;
+  line-height: 1.6;
+  color: #8899cc;
+  margin: 0 0 18px;
+  border-top: 1px solid rgba(100, 160, 255, 0.1);
+  padding-top: 14px;
+}
+
+.stats {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 0.8rem;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(100, 160, 255, 0.07);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.stat-label {
+  color: #4a5a88;
+  letter-spacing: 0.5px;
+}
+
+.stat-value {
+  font-weight: 600;
+  color: #a0c4ff;
+  font-size: 0.85rem;
+}
+
+.satellites-row {
+  align-items: flex-start;
+}
+
+.satellites-list {
+  text-align: right;
+  line-height: 1.5;
+  max-width: 180px;
+}

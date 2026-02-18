@@ -1,0 +1,26 @@
+<div class="app-container">
+  @if (loading()) {
+    <div class="overlay">
+      <div class="loader"></div>
+      <p>Učitavanje Solarnog sistema...</p>
+    </div>
+  } @else if (error()) {
+    <div class="overlay error">
+      <p class="error-icon">⚠</p>
+      <p>{{ error() }}</p>
+      <code>go run main.go</code>
+    </div>
+  } @else {
+    <app-solar-system
+      [planets]="planets()"
+      (planetSelected)="onPlanetSelected($event)"
+    />
+
+    @if (selectedPlanet()) {
+      <app-planet-info
+        [planet]="selectedPlanet()!"
+        (closed)="onInfoClosed()"
+      />
+    }
+  }
+</div>

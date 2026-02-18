@@ -1,0 +1,31 @@
+<div class="scene-wrapper">
+  <canvas #canvas class="solar-canvas"></canvas>
+
+  <div class="hud">
+    <div class="hud-title">Istraživač Solarnog sistema</div>
+    <div class="speed-controls">
+      <span class="speed-label">Brzina simulacije</span>
+      <div class="speed-buttons">
+        <button class="hud-btn" (click)="decreaseSpeed()" title="Uspori">◀◀</button>
+        <span class="speed-value">{{ simulationSpeed() / 0.25 }}x</span>
+        <button class="hud-btn" (click)="increaseSpeed()" title="Ubrzi">▶▶</button>
+      </div>
+      <button class="hud-btn reset-btn" (click)="resetSpeed()">Resetuj</button>
+    </div>
+    <div class="mouse-controls">
+      <div class="hud-hint">Klikni na planetu za detalje</div>
+      <div class="mouse-row"><span class="mouse-icon">🖱️ Levi</span><span class="mouse-desc">Rotacija</span></div>
+      <div class="mouse-row"><span class="mouse-icon">🖱️ Desni</span><span class="mouse-desc">Pomicanje</span></div>
+      <div class="mouse-row"><span class="mouse-icon">⚙️ Skrol</span><span class="mouse-desc">Zum</span></div>
+    </div>
+  </div>
+
+  @if (hoveredPlanet(); as hp) {
+    <div class="planet-tooltip"
+         [style.left.px]="tooltipPos().x"
+         [style.top.px]="tooltipPos().y">
+      <span class="tooltip-dot" [style.background]="hp.color"></span>
+      {{ hp.name }}
+    </div>
+  }
+</div>

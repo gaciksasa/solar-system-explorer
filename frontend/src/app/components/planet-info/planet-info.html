@@ -1,0 +1,102 @@
+<div class="info-panel">
+  <button class="close-btn" (click)="close()" title="Zatvori">✕</button>
+
+  <div class="planet-header">
+    <div class="planet-dot" [style.background]="planet.color"></div>
+    <div class="planet-names">
+      <h2 class="planet-name-sr">{{ planet.name_sr }}</h2>
+      <span class="planet-name-en">{{ planet.name }}</span>
+    </div>
+  </div>
+
+  <p class="planet-description">{{ planet.description }}</p>
+
+  <div class="stats">
+    @if (planet.is_asteroid_belt) {
+      <div class="stat-row">
+        <span class="stat-label">Udaljenost od Sunca</span>
+        <span class="stat-value">2.2 – 3.2 AJ</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Orbitalni period</span>
+        <span class="stat-value">3.3 – 6 godina</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Broj tela (&gt; 1 km)</span>
+        <span class="stat-value">1.1 – 1.9 miliona</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Ukupna masa</span>
+        <span class="stat-value">~4% mase Meseca</span>
+      </div>
+      <div class="stat-row satellites-row">
+        <span class="stat-label">Poznata tela</span>
+        <span class="stat-value satellites-list">Cerera, Vesta, Palada, Higija, Eros</span>
+      </div>
+    } @else if (planet.is_oort_cloud) {
+      <div class="stat-row">
+        <span class="stat-label">Unutrašnji pojas</span>
+        <span class="stat-value">2 000 – 5 000 AJ</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Spoljašnji pojas</span>
+        <span class="stat-value">do 100 000 AJ</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Procenjeni broj tela</span>
+        <span class="stat-value">~2 triliona</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Izvor kometa</span>
+        <span class="stat-value">Dugoperiodične komete</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Status</span>
+        <span class="stat-value">Hipotetički (nije posmatran)</span>
+      </div>
+    } @else {
+      @if (!planet.is_star) {
+        <div class="stat-row">
+          <span class="stat-label">Distanca od Sunca</span>
+          <span class="stat-value">{{ formatDistance(planet.distance_from_sun) }}</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Perihelij</span>
+          <span class="stat-value">{{ perihelion(planet) }}</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Afelij</span>
+          <span class="stat-value">{{ aphelion(planet) }}</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Nagib ekliptike</span>
+          <span class="stat-value">{{ formatInclination(planet.inclination) }}</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Orbitalni period</span>
+          <span class="stat-value">{{ formatPeriod(planet.orbital_period) }}</span>
+        </div>
+      }
+      <div class="stat-row">
+        <span class="stat-label">Radius</span>
+        <span class="stat-value">{{ planet.radius | number: '1.0-0' }} km</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Period rotacije</span>
+        <span class="stat-value">{{ formatPeriod(planet.rotation_period) }}</span>
+      </div>
+      @if (!planet.is_star) {
+        <div class="stat-row">
+          <span class="stat-label">Sateliti</span>
+          <span class="stat-value">{{ planet.satellites }}</span>
+        </div>
+        @if (planet.notable_satellites.length > 0) {
+          <div class="stat-row satellites-row">
+            <span class="stat-label">Poznati sateliti</span>
+            <span class="stat-value satellites-list">{{ planet.notable_satellites.join(', ') }}</span>
+          </div>
+        }
+      }
+    }
+  </div>
+</div>

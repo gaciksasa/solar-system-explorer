@@ -1,0 +1,14 @@
+# Go
+backend/bin/
+*.exe
+*.test
+backend/*.log
+
+# Angular / Node
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+
+# Editor
+.vscode/settings.json
+*.DS_Store
