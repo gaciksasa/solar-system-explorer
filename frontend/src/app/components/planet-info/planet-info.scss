@@ -34,7 +34,7 @@
     border-left: none;
     border-right: none;
     border-bottom: none;
-    padding: 20px 20px 80px; // bottom padding clears mobile bar
+    padding: 20px 20px 72px; // bottom padding clears mobile bar (~56px bar + label)
     overflow-y: auto;
     animation: slideUp 0.28s ease-out;
 

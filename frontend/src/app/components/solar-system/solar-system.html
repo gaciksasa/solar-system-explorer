@@ -21,49 +21,62 @@
     </div>
   </div>
 
-  <!-- Mobile bottom bar -->
+  <!-- Mobile bottom bar — single row with labeled groups -->
   <div class="mobile-bar">
-    <!-- Speed group -->
+    <!-- Speed -->
     <div class="mobile-group">
       <span class="mobile-label">Brzina</span>
-      <div class="mobile-row">
-        <button class="nav-btn" (click)="decreaseSpeed()">◀◀</button>
+      <div class="mobile-btns">
+        <button class="nav-btn" (click)="decreaseSpeed()" title="Uspori">◀◀</button>
         <span class="speed-value">{{ simulationSpeed() / 0.25 }}x</span>
-        <button class="nav-btn" (click)="increaseSpeed()">▶▶</button>
+        <button class="nav-btn" (click)="increaseSpeed()" title="Ubrzi">▶▶</button>
       </div>
     </div>
 
     <div class="mobile-divider"></div>
 
-    <!-- Rotation group -->
+    <!-- Pan -->
+    <div class="mobile-group">
+      <span class="mobile-label">Pomicanje</span>
+      <div class="mobile-btns">
+        <button class="nav-btn" title="Levo"
+          (pointerdown)="startNav('panLeft')" (pointerup)="stopNav()" (pointerleave)="stopNav()">◀</button>
+        <button class="nav-btn" title="Gore"
+          (pointerdown)="startNav('panUp')" (pointerup)="stopNav()" (pointerleave)="stopNav()">▲</button>
+        <button class="nav-btn" title="Dole"
+          (pointerdown)="startNav('panDown')" (pointerup)="stopNav()" (pointerleave)="stopNav()">▼</button>
+        <button class="nav-btn" title="Desno"
+          (pointerdown)="startNav('panRight')" (pointerup)="stopNav()" (pointerleave)="stopNav()">▶</button>
+      </div>
+    </div>
+
+    <div class="mobile-divider"></div>
+
+    <!-- Rotate -->
     <div class="mobile-group">
       <span class="mobile-label">Rotacija</span>
-      <div class="mobile-row">
-        <button class="nav-btn"
-          (pointerdown)="startNav('rotateLeft')"
-          (pointerup)="stopNav()"
-          (pointerleave)="stopNav()">◁</button>
-        <button class="nav-btn"
-          (pointerdown)="startNav('rotateRight')"
-          (pointerup)="stopNav()"
-          (pointerleave)="stopNav()">▷</button>
+      <div class="mobile-btns">
+        <button class="nav-btn" title="Rotiraj levo"
+          (pointerdown)="startNav('rotateLeft')" (pointerup)="stopNav()" (pointerleave)="stopNav()">↺</button>
+        <button class="nav-btn" title="Rotiraj gore"
+          (pointerdown)="startNav('rotateUp')" (pointerup)="stopNav()" (pointerleave)="stopNav()">↑</button>
+        <button class="nav-btn" title="Rotiraj dole"
+          (pointerdown)="startNav('rotateDown')" (pointerup)="stopNav()" (pointerleave)="stopNav()">↓</button>
+        <button class="nav-btn" title="Rotiraj desno"
+          (pointerdown)="startNav('rotateRight')" (pointerup)="stopNav()" (pointerleave)="stopNav()">↻</button>
       </div>
     </div>
 
     <div class="mobile-divider"></div>
 
-    <!-- Zoom group -->
+    <!-- Zoom -->
     <div class="mobile-group">
       <span class="mobile-label">Zum</span>
-      <div class="mobile-row">
-        <button class="nav-btn"
-          (pointerdown)="startNav('zoomIn')"
-          (pointerup)="stopNav()"
-          (pointerleave)="stopNav()">+</button>
-        <button class="nav-btn"
-          (pointerdown)="startNav('zoomOut')"
-          (pointerup)="stopNav()"
-          (pointerleave)="stopNav()">−</button>
+      <div class="mobile-btns">
+        <button class="nav-btn" title="Zoom in"
+          (pointerdown)="startNav('zoomIn')" (pointerup)="stopNav()" (pointerleave)="stopNav()">+</button>
+        <button class="nav-btn" title="Zoom out"
+          (pointerdown)="startNav('zoomOut')" (pointerup)="stopNav()" (pointerleave)="stopNav()">−</button>
       </div>
     </div>
   </div>

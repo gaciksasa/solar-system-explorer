@@ -584,10 +584,16 @@ export class SolarSystem implements AfterViewInit, OnDestroy {
     this.stopNav();
     const step = (): void => {
       switch (action) {
-        case 'rotateLeft':  this.shiftCameraAngle(-0.04); break;
-        case 'rotateRight': this.shiftCameraAngle(0.04);  break;
-        case 'zoomIn':      this.dollyCamera(0.97);        break;
-        case 'zoomOut':     this.dollyCamera(1.03);        break;
+        case 'rotateLeft':  this.shiftCameraAngle(-0.04,  0);    break;
+        case 'rotateRight': this.shiftCameraAngle( 0.04,  0);    break;
+        case 'rotateUp':    this.shiftCameraAngle( 0,    -0.04); break;
+        case 'rotateDown':  this.shiftCameraAngle( 0,     0.04); break;
+        case 'zoomIn':      this.dollyCamera(0.97);               break;
+        case 'zoomOut':     this.dollyCamera(1.03);               break;
+        case 'panLeft':     this.panCamera(-1,  0); break;
+        case 'panRight':    this.panCamera( 1,  0); break;
+        case 'panUp':       this.panCamera( 0,  1); break;
+        case 'panDown':     this.panCamera( 0, -1); break;
       }
     };
     step();
@@ -601,11 +607,13 @@ export class SolarSystem implements AfterViewInit, OnDestroy {
     }
   }
 
-  /** Rotate camera horizontally around the current orbit target. */
-  private shiftCameraAngle(delta: number): void {
+  /** Rotate camera around the orbit target.
+   *  deltaTheta = horizontal (Y-axis), deltaPhi = vertical (polar angle). */
+  private shiftCameraAngle(deltaTheta: number, deltaPhi: number): void {
     const offset = this.camera.position.clone().sub(this.controls.target);
     const spherical = new THREE.Spherical().setFromVector3(offset);
-    spherical.theta += delta;
+    spherical.theta += deltaTheta;
+    spherical.phi = Math.max(0.05, Math.min(Math.PI - 0.05, spherical.phi + deltaPhi));
     offset.setFromSpherical(spherical);
     this.camera.position.copy(this.controls.target).add(offset);
     this.controls.update();
@@ -620,5 +628,21 @@ export class SolarSystem implements AfterViewInit, OnDestroy {
       this.camera.position.copy(this.controls.target).add(offset);
       this.controls.update();
     }
+  }
+
+  /** Pan camera (and orbit target) in the camera's local XY plane.
+   *  Speed scales with distance so panning feels consistent at any zoom. */
+  private panCamera(dx: number, dy: number): void {
+    const dist = this.camera.position.distanceTo(this.controls.target);
+    const speed = dist * 0.008;
+    const right = new THREE.Vector3();
+    const up    = new THREE.Vector3();
+    const _fwd  = new THREE.Vector3();
+    this.camera.matrix.extractBasis(right, up, _fwd);
+    const offset = right.multiplyScalar(dx * speed)
+                        .addScaledVector(up, dy * speed);
+    this.camera.position.add(offset);
+    this.controls.target.add(offset);
+    this.controls.update();
   }
 }
