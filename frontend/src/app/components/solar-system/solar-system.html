@@ -8,7 +8,7 @@
       <span class="speed-label">Brzina simulacije</span>
       <div class="speed-buttons">
         <button class="hud-btn" (click)="decreaseSpeed()" title="Uspori">◀◀</button>
-        <span class="speed-value">{{ simulationSpeed() / 0.25 }}x</span>
+        <span class="speed-value">{{ simulationSpeed() === 0 ? '⏸' : (simulationSpeed() / 0.25) + 'x' }}</span>
         <button class="hud-btn" (click)="increaseSpeed()" title="Ubrzi">▶▶</button>
       </div>
       <button class="hud-btn reset-btn" (click)="resetSpeed()">Resetuj</button>
@@ -28,7 +28,7 @@
       <span class="mobile-label">Brzina</span>
       <div class="mobile-btns">
         <button class="nav-btn" (click)="decreaseSpeed()" title="Uspori">◀◀</button>
-        <span class="speed-value">{{ simulationSpeed() / 0.25 }}x</span>
+        <span class="speed-value">{{ simulationSpeed() === 0 ? '⏸' : (simulationSpeed() / 0.25) + 'x' }}</span>
         <button class="nav-btn" (click)="increaseSpeed()" title="Ubrzi">▶▶</button>
       </div>
     </div>

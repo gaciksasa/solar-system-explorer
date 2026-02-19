@@ -36,6 +36,7 @@ interface PlanetObject {
   sinNode: number;
   cosInc: number;
   sinInc: number;
+  ring?: THREE.Mesh;  // Saturn's ring (scene-level, not parented to mesh)
 }
 
 interface CometObject {
@@ -50,6 +51,18 @@ interface CometObject {
   meanAnomaly: number;
   a: number; b: number; e: number;
   cosNode: number; sinNode: number; cosInc: number; sinInc: number;
+}
+
+/** Visual-only moon — no hitMesh, no info panel. Orbits around a parent planet. */
+interface MoonObject {
+  mesh: THREE.Mesh;
+  orbitLine: THREE.LineLoop;
+  orbitRadius: number;   // world units from planet centre
+  speed: number;         // Δangle per frame (rad), negative = retrograde
+  angle: number;         // current orbital angle (rad)
+  cosInc: number;        // precomputed from inclination to ecliptic
+  sinInc: number;
+  parentPlanetObj: PlanetObject;
 }
 
 @Component({
@@ -78,6 +91,15 @@ export class SolarSystem implements AfterViewInit, OnDestroy {
   private animationId!: number;
   private planetObjects: PlanetObject[] = [];
   private cometObjects: CometObject[] = [];
+  private moonObjects:  MoonObject[]  = [];
+  // Smooth camera zoom animation triggered by double-click
+  private _zoomAnim?: {
+    fromCam: THREE.Vector3;
+    toCam: THREE.Vector3;
+    fromTarget: THREE.Vector3;
+    toTarget: THREE.Vector3;
+    t: number;   // progress 0 → 1
+  };
   // All hit-detection meshes (invisible, larger than visual).
   // Used for both click and hover raycasting.
   private hitMeshes: THREE.Mesh[] = [];
@@ -167,12 +189,47 @@ export class SolarSystem implements AfterViewInit, OnDestroy {
     },
   ] as const;
 
+  // Moon orbital radii in visual units.
+  //
+  // Each planet's moon system is scaled so its innermost moon sits at
+  // 1.5 × parent visual radius — just outside the planet sphere.
+  // All other moons of that planet use the SAME scale factor, so their
+  // relative spacings exactly match the real km distances.
+  //
+  // Formula per planet:  scale = (parentVisR × 1.5) / rawVis_innermost
+  //   rawVis = distKm × (35 / 149_597_870)       [1 AU = 35 vis units]
+  //   orbitVis = rawVis × scale
+  //
+  // Resulting ratios (e.g. Callisto/Io = 1882700/421800 = 4.46) are preserved.
+  // Real inclinations to the ecliptic; Uranus moons ≈ 97.8°, Triton 156.8°.
+  private readonly MOON_DEFS = [
+    // Earth  — Moon only  (scale ×20.0)
+    { name: 'Mesec',    parentName: 'Earth',   color: '#bbbbaa', orbitVis:  1.80, vr: 0.35, periodDays:  27.320, incDeg:   5.14 },
+    // Mars   — inner: Phobos  (scale ×616)
+    { name: 'Fobos',   parentName: 'Mars',    color: '#887766', orbitVis:  1.35, vr: 0.18, periodDays:   0.319, incDeg:  26.04 },
+    { name: 'Dejmos',  parentName: 'Mars',    color: '#998877', orbitVis:  3.38, vr: 0.14, periodDays:   1.263, incDeg:  27.58 },
+    // Jupiter — Galilean moons  (scale ×48.6, inner: Io)
+    { name: 'Io',      parentName: 'Jupiter', color: '#ddaa44', orbitVis:  4.80, vr: 0.30, periodDays:   1.769, incDeg:   2.21 },
+    { name: 'Evropa',  parentName: 'Jupiter', color: '#aaccee', orbitVis:  7.63, vr: 0.25, periodDays:   3.551, incDeg:   3.10 },
+    { name: 'Ganimede',parentName: 'Jupiter', color: '#997766', orbitVis: 12.18, vr: 0.38, periodDays:   7.155, incDeg:   2.21 },
+    { name: 'Kalisto', parentName: 'Jupiter', color: '#776655', orbitVis: 21.43, vr: 0.32, periodDays:  16.690, incDeg:   2.02 },
+    // Saturn — inner: Enceladus  (scale ×75.4)
+    { name: 'Enkelad', parentName: 'Saturn',  color: '#ddeeff', orbitVis:  4.20, vr: 0.16, periodDays:   1.370, incDeg:  28.05 },
+    { name: 'Titan',   parentName: 'Saturn',  color: '#ddaa66', orbitVis: 21.56, vr: 0.34, periodDays:  15.945, incDeg:  28.06 },
+    // Uranus — near-perpendicular (axial tilt 97.77°), inner: Titania  (scale ×32.4)
+    { name: 'Titanija',parentName: 'Uranus',  color: '#aaaacc', orbitVis:  3.30, vr: 0.22, periodDays:   8.706, incDeg:  97.77 },
+    { name: 'Oberon',  parentName: 'Uranus',  color: '#887777', orbitVis:  4.42, vr: 0.20, periodDays:  13.463, incDeg:  97.77 },
+    // Neptune — Triton only, retrograde  (scale ×37.9)
+    { name: 'Triton',  parentName: 'Neptune', color: '#aabbdd', orbitVis:  3.15, vr: 0.26, periodDays:   5.877, incDeg: 156.84 },
+  ] as const;
+
   ngAfterViewInit(): void {
     this.initScene();
     this.buildSolarSystem();
     this.createAsteroidBelt();
     this.createOortCloudHitSphere();
     this.createComets();
+    this.createMoons();
     this.animate();
     window.addEventListener('resize', this.onResize);
   }
@@ -183,6 +240,7 @@ export class SolarSystem implements AfterViewInit, OnDestroy {
     window.removeEventListener('resize', this.onResize);
     const canvas = this.canvasRef.nativeElement;
     canvas.removeEventListener('click', this.onCanvasClick);
+    canvas.removeEventListener('dblclick', this.onCanvasDblClick);
     canvas.removeEventListener('mousemove', this.onCanvasMouseMove);
     canvas.removeEventListener('wheel', this.onCanvasZoom);
     canvas.removeEventListener('touchstart', this.onCanvasTouchStart);
@@ -230,6 +288,7 @@ export class SolarSystem implements AfterViewInit, OnDestroy {
     // the hovered planet actually changes.
     this.ngZone.runOutsideAngular(() => {
       canvas.addEventListener('click', this.onCanvasClick);
+      canvas.addEventListener('dblclick', this.onCanvasDblClick);
       canvas.addEventListener('mousemove', this.onCanvasMouseMove);
       canvas.addEventListener('wheel', this.onCanvasZoom, { passive: true });
       canvas.addEventListener('touchstart', this.onCanvasTouchStart, { passive: true });
@@ -340,20 +399,6 @@ export class SolarSystem implements AfterViewInit, OnDestroy {
       this.scene.add(hitMesh);
       this.hitMeshes.push(hitMesh);
 
-      // Saturn's rings (attached to planet mesh)
-      if (planet.name === 'Saturn') {
-        const ringGeo = new THREE.RingGeometry(visualRadius * 1.4, visualRadius * 2.3, 80);
-        const ringMat = new THREE.MeshBasicMaterial({
-          color: 0xc9a96e,
-          side: THREE.DoubleSide,
-          transparent: true,
-          opacity: 0.75,
-        });
-        const ring = new THREE.Mesh(ringGeo, ringMat);
-        ring.rotation.x = Math.PI / 2.6;
-        mesh.add(ring);
-      }
-
       const speed = (365.25 / planet.orbital_period) * 0.006;
       const startM = Math.random() * Math.PI * 2;
       // Negative rotation_period means retrograde (Venus: −243d, Uranus: −0.72d)
@@ -365,6 +410,22 @@ export class SolarSystem implements AfterViewInit, OnDestroy {
         speed, meanAnomaly: startM, rotationDir,
         a, b, e, cosNode, sinNode, cosInc, sinInc,
       };
+
+      // Saturn's ring — added directly to scene (not parented to mesh) so it
+      // doesn't inherit the planet's axial spin; position is updated each frame.
+      if (planet.name === 'Saturn') {
+        const ringGeo = new THREE.RingGeometry(visualRadius * 1.4, visualRadius * 2.3, 80);
+        const ringMat = new THREE.MeshBasicMaterial({
+          color: 0xc9a96e,
+          side: THREE.DoubleSide,
+          transparent: true,
+          opacity: 0.75,
+        });
+        const ring = new THREE.Mesh(ringGeo, ringMat);
+        ring.rotation.x = Math.PI / 2.6;
+        this.scene.add(ring);
+        obj.ring = ring;
+      }
       const initPos = this.keplerToWorld(obj);
       mesh.position.copy(initPos);
       hitMesh.position.copy(initPos);
@@ -591,6 +652,71 @@ export class SolarSystem implements AfterViewInit, OnDestroy {
     }
   }
 
+  /** Faint circle in the moon's orbital plane (tilted by inclination around X-axis). */
+  private createMoonOrbitLine(radius: number, cosInc: number, sinInc: number): THREE.LineLoop {
+    const N = 64;
+    const pts: THREE.Vector3[] = [];
+    for (let i = 0; i < N; i++) {
+      const a = (i / N) * Math.PI * 2;
+      const xOrb = Math.cos(a) * radius;
+      const zOrb = Math.sin(a) * radius;
+      pts.push(new THREE.Vector3(xOrb, sinInc * zOrb, cosInc * zOrb));
+    }
+    const geo = new THREE.BufferGeometry().setFromPoints(pts);
+    const mat = new THREE.LineBasicMaterial({ color: 0x445577, transparent: true, opacity: 0.45 });
+    return new THREE.LineLoop(geo, mat);
+  }
+
+  private createMoons(): void {
+    for (const def of this.MOON_DEFS) {
+      // Find parent planet object by name
+      const parentObj = this.planetObjects.find(
+        p => (p.mesh.userData['planet'] as Planet).name === def.parentName
+      );
+      if (!parentObj) continue;
+
+      const orbitRadius = def.orbitVis;
+      const incRad = (def.incDeg * Math.PI) / 180;
+      const cosInc = Math.cos(incRad);
+      const sinInc = Math.sin(incRad);
+
+      // Orbit ring (repositioned each frame with parent planet)
+      const orbitLine = this.createMoonOrbitLine(orbitRadius, cosInc, sinInc);
+      this.scene.add(orbitLine);
+
+      // Moon sphere
+      const color = new THREE.Color(def.color);
+      const geo = new THREE.SphereGeometry(def.vr, 12, 12);
+      const mat = new THREE.MeshPhongMaterial({
+        color,
+        emissive: color,
+        emissiveIntensity: 0.35,
+        shininess: 15,
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+      this.scene.add(mesh);
+
+      // Speed: same frame-rate formula as planets (rad/frame at 1× sim speed)
+      const speed = (365.25 / def.periodDays) * 0.006;
+      const startAngle = Math.random() * Math.PI * 2;
+
+      const obj: MoonObject = {
+        mesh, orbitLine, orbitRadius, speed,
+        angle: startAngle, cosInc, sinInc,
+        parentPlanetObj: parentObj,
+      };
+
+      // Place at initial position
+      const pp = parentObj.mesh.position;
+      const x0 = Math.cos(startAngle) * orbitRadius;
+      const z0 = Math.sin(startAngle) * orbitRadius;
+      mesh.position.set(pp.x + x0, pp.y + sinInc * z0, pp.z + cosInc * z0);
+      orbitLine.position.copy(pp);
+
+      this.moonObjects.push(obj);
+    }
+  }
+
   private animate = (): void => {
     this.animationId = requestAnimationFrame(this.animate);
 
@@ -610,6 +736,7 @@ export class SolarSystem implements AfterViewInit, OnDestroy {
       obj.mesh.position.copy(pos);
       obj.hitMesh.position.copy(pos);
       obj.mesh.rotation.y += obj.rotationDir * 0.005;
+      obj.ring?.position.copy(pos);
 
       // Hit sphere: always ~30px radius on screen regardless of zoom
       const dist = this.camera.position.distanceTo(pos);
@@ -625,6 +752,20 @@ export class SolarSystem implements AfterViewInit, OnDestroy {
       const sunDist = this.camera.position.distanceTo(this._tmpVec);
       const sunHitR = (HIT_PX / halfH) * sunDist * tanHalfFov;
       this.sunHitMesh.scale.setScalar(sunHitR / this.HIT_RADIUS);
+    }
+
+    // ── Moons ──────────────────────────────────────────────────────────────────
+    for (const obj of this.moonObjects) {
+      obj.angle += obj.speed * speed;
+      const pp = obj.parentPlanetObj.mesh.position;
+      const x   = Math.cos(obj.angle) * obj.orbitRadius;
+      const zOrb = Math.sin(obj.angle) * obj.orbitRadius;
+      obj.mesh.position.set(
+        pp.x + x,
+        pp.y + obj.sinInc * zOrb,
+        pp.z + obj.cosInc * zOrb,
+      );
+      obj.orbitLine.position.copy(pp);
     }
 
     // ── Comets ─────────────────────────────────────────────────────────────────
@@ -655,6 +796,22 @@ export class SolarSystem implements AfterViewInit, OnDestroy {
 
     if (this.asteroidBelt) {
       this.asteroidBelt.rotation.y -= 0.00008 * speed;
+    }
+
+    // ── Double-click zoom animation (ease-in-out cubic) ────────────────────────
+    if (this._zoomAnim) {
+      const a = this._zoomAnim;
+      a.t = Math.min(a.t + 0.04, 1);
+      // Cubic ease-in-out
+      const ease = a.t < 0.5
+        ? 4 * a.t ** 3
+        : 1 - (-2 * a.t + 2) ** 3 / 2;
+      this.camera.position.lerpVectors(a.fromCam, a.toCam, ease);
+      this.controls.target.lerpVectors(a.fromTarget, a.toTarget, ease);
+      if (a.t >= 1) {
+        this._zoomAnim = undefined;
+        this.controls.enabled = true;
+      }
     }
 
     this.controls.update();
@@ -755,6 +912,50 @@ export class SolarSystem implements AfterViewInit, OnDestroy {
     }
   };
 
+  /** Double-click: smoothly zoom camera to focus on the clicked object. */
+  private onCanvasDblClick = (event: MouseEvent): void => {
+    this.updateMouseCoords(event);
+    this.raycaster.setFromCamera(this.mouse, this.camera);
+    const hits = this.raycaster.intersectObjects(this.hitMeshes);
+    if (hits.length === 0) return;
+
+    const planet = hits[0].object.userData['planet'] as Planet | undefined;
+    if (!planet || planet.is_oort_cloud) return;
+
+    // Target world position of the object (hitMesh.position is always current)
+    const targetPos = hits[0].object.position.clone();
+
+    // Zoom distance: enough to see the object clearly, clamped to minDistance
+    let zoomDist: number;
+    if (planet.is_asteroid_belt) {
+      zoomDist = 120;
+    } else if (planet.is_comet) {
+      zoomDist = 20;
+    } else {
+      const visR = this.VISUAL_SIZES[planet.name] ?? 2;
+      zoomDist = Math.max(visR * 8, this.controls.minDistance + 5);
+    }
+
+    // Keep camera on its current side relative to the new focus point
+    const dir = this.camera.position.clone().sub(targetPos).normalize();
+    const toCam = targetPos.clone().addScaledVector(dir, zoomDist);
+
+    // Hide tooltip and close info panel before animating
+    this.ngZone.run(() => {
+      this.hoveredPlanet.set(null);
+      this.closeInfo.emit();
+    });
+
+    this.controls.enabled = false;
+    this._zoomAnim = {
+      fromCam:    this.camera.position.clone(),
+      toCam,
+      fromTarget: this.controls.target.clone(),
+      toTarget:   targetPos,
+      t: 0,
+    };
+  };
+
   private onResize = (): void => {
     const canvas = this.canvasRef.nativeElement;
     this.camera.aspect = canvas.clientWidth / canvas.clientHeight;
@@ -763,11 +964,11 @@ export class SolarSystem implements AfterViewInit, OnDestroy {
   };
 
   increaseSpeed(): void {
-    this.simulationSpeed.update(v => Math.min(v * 2, 64));
+    this.simulationSpeed.update(v => v === 0 ? 0.125 : Math.min(v * 2, 64));
   }
 
   decreaseSpeed(): void {
-    this.simulationSpeed.update(v => Math.max(v / 2, 0.125));
+    this.simulationSpeed.update(v => v <= 0.125 ? 0 : v / 2);
   }
 
   resetSpeed(): void {
