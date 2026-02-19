@@ -49,6 +49,7 @@ export class SolarSystem implements AfterViewInit, OnDestroy {
   @ViewChild('canvas') canvasRef!: ElementRef<HTMLCanvasElement>;
   @Input() planets: Planet[] = [];
   @Output() planetSelected = new EventEmitter<Planet>();
+  @Output() closeInfo      = new EventEmitter<void>();
 
   private readonly ngZone = inject(NgZone);
 
@@ -140,6 +141,8 @@ export class SolarSystem implements AfterViewInit, OnDestroy {
     const canvas = this.canvasRef.nativeElement;
     canvas.removeEventListener('click', this.onCanvasClick);
     canvas.removeEventListener('mousemove', this.onCanvasMouseMove);
+    canvas.removeEventListener('wheel', this.onCanvasZoom);
+    canvas.removeEventListener('touchstart', this.onCanvasTouchStart);
     this.renderer.dispose();
   }
 
@@ -182,6 +185,8 @@ export class SolarSystem implements AfterViewInit, OnDestroy {
     this.ngZone.runOutsideAngular(() => {
       canvas.addEventListener('click', this.onCanvasClick);
       canvas.addEventListener('mousemove', this.onCanvasMouseMove);
+      canvas.addEventListener('wheel', this.onCanvasZoom, { passive: true });
+      canvas.addEventListener('touchstart', this.onCanvasTouchStart, { passive: true });
     });
   }
 
@@ -540,6 +545,18 @@ export class SolarSystem implements AfterViewInit, OnDestroy {
     } else {
       this.ngZone.run(() => this.hoveredPlanet.set(null));
       canvas.style.cursor = 'default';
+    }
+  };
+
+  // Close info panel on scroll-wheel zoom (desktop)
+  private onCanvasZoom = (): void => {
+    this.ngZone.run(() => this.closeInfo.emit());
+  };
+
+  // Close info panel when a pinch gesture starts (two fingers on screen)
+  private onCanvasTouchStart = (e: TouchEvent): void => {
+    if (e.touches.length >= 2) {
+      this.ngZone.run(() => this.closeInfo.emit());
     }
   };
 
