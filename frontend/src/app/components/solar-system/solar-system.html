@@ -50,35 +50,6 @@
       </div>
     </div>
 
-    <div class="mobile-divider"></div>
-
-    <!-- Rotate -->
-    <div class="mobile-group">
-      <span class="mobile-label">Rotacija</span>
-      <div class="mobile-btns">
-        <button class="nav-btn" title="Rotiraj levo"
-          (pointerdown)="startNav('rotateLeft')" (pointerup)="stopNav()" (pointerleave)="stopNav()">↺</button>
-        <button class="nav-btn" title="Rotiraj gore"
-          (pointerdown)="startNav('rotateUp')" (pointerup)="stopNav()" (pointerleave)="stopNav()">↑</button>
-        <button class="nav-btn" title="Rotiraj dole"
-          (pointerdown)="startNav('rotateDown')" (pointerup)="stopNav()" (pointerleave)="stopNav()">↓</button>
-        <button class="nav-btn" title="Rotiraj desno"
-          (pointerdown)="startNav('rotateRight')" (pointerup)="stopNav()" (pointerleave)="stopNav()">↻</button>
-      </div>
-    </div>
-
-    <div class="mobile-divider"></div>
-
-    <!-- Zoom -->
-    <div class="mobile-group">
-      <span class="mobile-label">Zum</span>
-      <div class="mobile-btns">
-        <button class="nav-btn" title="Zoom in"
-          (pointerdown)="startNav('zoomIn')" (pointerup)="stopNav()" (pointerleave)="stopNav()">+</button>
-        <button class="nav-btn" title="Zoom out"
-          (pointerdown)="startNav('zoomOut')" (pointerup)="stopNav()" (pointerleave)="stopNav()">−</button>
-      </div>
-    </div>
   </div>
 
   @if (hoveredPlanet(); as hp) {
