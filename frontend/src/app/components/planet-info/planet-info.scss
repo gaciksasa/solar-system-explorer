@@ -17,13 +17,48 @@
   z-index: 10;
 
   @keyframes slideIn {
-    from {
-      transform: translateX(30px);
-      opacity: 0;
+    from { transform: translateX(30px); opacity: 0; }
+    to   { transform: translateX(0);    opacity: 1; }
+  }
+
+  // ── Mobile: full-width bottom sheet ────────────────────────────────────────
+  @media (max-width: 768px) {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    top: auto;
+    width: 100%;
+    max-height: 60vh;
+    border-radius: 16px 16px 0 0;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+    padding: 20px 20px 80px; // bottom padding clears mobile bar
+    overflow-y: auto;
+    animation: slideUp 0.28s ease-out;
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
     }
-    to {
-      transform: translateX(0);
-      opacity: 1;
+
+    // Hide secondary stats on mobile — keep only essentials
+    .stat-secondary {
+      display: none;
+    }
+
+    // Hide long description to save vertical space
+    .planet-description {
+      display: none;
+    }
+
+    .planet-header {
+      margin-bottom: 6px;
+    }
+
+    .planet-name-sr {
+      font-size: 1.2rem;
     }
   }
 }

@@ -1,6 +1,7 @@
 <div class="scene-wrapper">
   <canvas #canvas class="solar-canvas"></canvas>
 
+  <!-- Desktop HUD (top-left) -->
   <div class="hud">
     <div class="hud-title">Istraživač Solarnog sistema</div>
     <div class="speed-controls">
@@ -17,6 +18,53 @@
       <div class="mouse-row"><span class="mouse-icon">🖱️ Levi</span><span class="mouse-desc">Rotacija</span></div>
       <div class="mouse-row"><span class="mouse-icon">🖱️ Desni</span><span class="mouse-desc">Pomicanje</span></div>
       <div class="mouse-row"><span class="mouse-icon">⚙️ Skrol</span><span class="mouse-desc">Zum</span></div>
+    </div>
+  </div>
+
+  <!-- Mobile bottom bar -->
+  <div class="mobile-bar">
+    <!-- Speed group -->
+    <div class="mobile-group">
+      <span class="mobile-label">Brzina</span>
+      <div class="mobile-row">
+        <button class="nav-btn" (click)="decreaseSpeed()">◀◀</button>
+        <span class="speed-value">{{ simulationSpeed() / 0.25 }}x</span>
+        <button class="nav-btn" (click)="increaseSpeed()">▶▶</button>
+      </div>
+    </div>
+
+    <div class="mobile-divider"></div>
+
+    <!-- Rotation group -->
+    <div class="mobile-group">
+      <span class="mobile-label">Rotacija</span>
+      <div class="mobile-row">
+        <button class="nav-btn"
+          (pointerdown)="startNav('rotateLeft')"
+          (pointerup)="stopNav()"
+          (pointerleave)="stopNav()">◁</button>
+        <button class="nav-btn"
+          (pointerdown)="startNav('rotateRight')"
+          (pointerup)="stopNav()"
+          (pointerleave)="stopNav()">▷</button>
+      </div>
+    </div>
+
+    <div class="mobile-divider"></div>
+
+    <!-- Zoom group -->
+    <div class="mobile-group">
+      <span class="mobile-label">Zum</span>
+      <div class="mobile-row">
+        <button class="nav-btn"
+          (pointerdown)="startNav('zoomIn')"
+          (pointerup)="stopNav()"
+          (pointerleave)="stopNav()">+</button>
+        <button class="nav-btn"
+          (pointerdown)="startNav('zoomOut')"
+          (pointerup)="stopNav()"
+          (pointerleave)="stopNav()">−</button>
+      </div>
     </div>
   </div>
 

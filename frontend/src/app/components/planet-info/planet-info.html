@@ -21,15 +21,15 @@
         <span class="stat-label">Orbitalni period</span>
         <span class="stat-value">3.3 – 6 godina</span>
       </div>
-      <div class="stat-row">
+      <div class="stat-row stat-secondary">
         <span class="stat-label">Broj tela (&gt; 1 km)</span>
         <span class="stat-value">1.1 – 1.9 miliona</span>
       </div>
-      <div class="stat-row">
+      <div class="stat-row stat-secondary">
         <span class="stat-label">Ukupna masa</span>
         <span class="stat-value">~4% mase Meseca</span>
       </div>
-      <div class="stat-row satellites-row">
+      <div class="stat-row stat-secondary satellites-row">
         <span class="stat-label">Poznata tela</span>
         <span class="stat-value satellites-list">Cerera, Vesta, Palada, Higija, Eros</span>
       </div>
@@ -42,15 +42,15 @@
         <span class="stat-label">Spoljašnji pojas</span>
         <span class="stat-value">do 100 000 AJ</span>
       </div>
-      <div class="stat-row">
+      <div class="stat-row stat-secondary">
         <span class="stat-label">Procenjeni broj tela</span>
         <span class="stat-value">~2 triliona</span>
       </div>
-      <div class="stat-row">
+      <div class="stat-row stat-secondary">
         <span class="stat-label">Izvor kometa</span>
         <span class="stat-value">Dugoperiodične komete</span>
       </div>
-      <div class="stat-row">
+      <div class="stat-row stat-secondary">
         <span class="stat-label">Status</span>
         <span class="stat-value">Hipotetički (nije posmatran)</span>
       </div>
@@ -60,15 +60,15 @@
           <span class="stat-label">Distanca od Sunca</span>
           <span class="stat-value">{{ formatDistance(planet.distance_from_sun) }}</span>
         </div>
-        <div class="stat-row">
+        <div class="stat-row stat-secondary">
           <span class="stat-label">Perihelij</span>
           <span class="stat-value">{{ perihelion(planet) }}</span>
         </div>
-        <div class="stat-row">
+        <div class="stat-row stat-secondary">
           <span class="stat-label">Afelij</span>
           <span class="stat-value">{{ aphelion(planet) }}</span>
         </div>
-        <div class="stat-row">
+        <div class="stat-row stat-secondary">
           <span class="stat-label">Nagib ekliptike</span>
           <span class="stat-value">{{ formatInclination(planet.inclination) }}</span>
         </div>
@@ -77,7 +77,7 @@
           <span class="stat-value">{{ formatPeriod(planet.orbital_period) }}</span>
         </div>
       }
-      <div class="stat-row">
+      <div class="stat-row stat-secondary">
         <span class="stat-label">Radius</span>
         <span class="stat-value">{{ planet.radius | number: '1.0-0' }} km</span>
       </div>
@@ -91,7 +91,7 @@
           <span class="stat-value">{{ planet.satellites }}</span>
         </div>
         @if (planet.notable_satellites.length > 0) {
-          <div class="stat-row satellites-row">
+          <div class="stat-row stat-secondary satellites-row">
             <span class="stat-label">Poznati sateliti</span>
             <span class="stat-value satellites-list">{{ planet.notable_satellites.join(', ') }}</span>
           </div>

@@ -75,6 +75,7 @@ export class SolarSystem implements AfterViewInit, OnDestroy {
   private sunHitMesh?: THREE.Mesh;
   private sunVisualRadius = 0;
   private readonly _tmpVec = new THREE.Vector3();
+  private _navInterval?: ReturnType<typeof setInterval>;
 
   // Use real J2000 eccentricities (boost = 1) so the visual orbit matches the
   // perihelion/aphelion values shown in the info panel.
@@ -134,6 +135,7 @@ export class SolarSystem implements AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     cancelAnimationFrame(this.animationId);
+    this.stopNav();
     window.removeEventListener('resize', this.onResize);
     const canvas = this.canvasRef.nativeElement;
     canvas.removeEventListener('click', this.onCanvasClick);
@@ -573,5 +575,50 @@ export class SolarSystem implements AfterViewInit, OnDestroy {
 
   resetSpeed(): void {
     this.simulationSpeed.set(0.25);
+  }
+
+  // ── Mobile camera navigation ───────────────────────────────────────────────
+
+  /** Begin continuous camera action (rotate / zoom). Stops previous action. */
+  startNav(action: string): void {
+    this.stopNav();
+    const step = (): void => {
+      switch (action) {
+        case 'rotateLeft':  this.shiftCameraAngle(-0.04); break;
+        case 'rotateRight': this.shiftCameraAngle(0.04);  break;
+        case 'zoomIn':      this.dollyCamera(0.97);        break;
+        case 'zoomOut':     this.dollyCamera(1.03);        break;
+      }
+    };
+    step();
+    this._navInterval = setInterval(step, 100);
+  }
+
+  stopNav(): void {
+    if (this._navInterval !== undefined) {
+      clearInterval(this._navInterval);
+      this._navInterval = undefined;
+    }
+  }
+
+  /** Rotate camera horizontally around the current orbit target. */
+  private shiftCameraAngle(delta: number): void {
+    const offset = this.camera.position.clone().sub(this.controls.target);
+    const spherical = new THREE.Spherical().setFromVector3(offset);
+    spherical.theta += delta;
+    offset.setFromSpherical(spherical);
+    this.camera.position.copy(this.controls.target).add(offset);
+    this.controls.update();
+  }
+
+  /** Zoom camera in/out by scaling the distance to the orbit target. */
+  private dollyCamera(factor: number): void {
+    const offset = this.camera.position.clone().sub(this.controls.target);
+    const dist = offset.length() * factor;
+    if (dist >= this.controls.minDistance && dist <= this.controls.maxDistance) {
+      offset.setLength(dist);
+      this.camera.position.copy(this.controls.target).add(offset);
+      this.controls.update();
+    }
   }
 }
