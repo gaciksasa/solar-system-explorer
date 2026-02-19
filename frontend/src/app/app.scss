@@ -1,7 +1,8 @@
 .app-container {
   position: relative;
   width: 100vw;
-  height: 100vh;
+  height: 100vh;    // fallback for older browsers
+  height: 100dvh;   // dynamic viewport: excludes browser address/nav bars on mobile
   overflow: hidden;
   background: #000005;
 }
