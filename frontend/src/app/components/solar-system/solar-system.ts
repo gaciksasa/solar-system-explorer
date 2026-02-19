@@ -143,6 +143,7 @@ export class SolarSystem implements AfterViewInit, OnDestroy {
     canvas.removeEventListener('mousemove', this.onCanvasMouseMove);
     canvas.removeEventListener('wheel', this.onCanvasZoom);
     canvas.removeEventListener('touchstart', this.onCanvasTouchStart);
+    this.controls.removeEventListener('start', this.onControlsStart);
     this.renderer.dispose();
   }
 
@@ -170,6 +171,8 @@ export class SolarSystem implements AfterViewInit, OnDestroy {
     this.controls.dampingFactor = 0.06;
     this.controls.minDistance = 15;
     this.controls.maxDistance = 6000;
+    // Hide tooltip on any camera interaction (rotate, pan, zoom)
+    this.controls.addEventListener('start', this.onControlsStart);
 
     // Ambient + sun point light
     this.scene.add(new THREE.AmbientLight(0x222244, 1.5));
@@ -545,6 +548,13 @@ export class SolarSystem implements AfterViewInit, OnDestroy {
     } else {
       this.ngZone.run(() => this.hoveredPlanet.set(null));
       canvas.style.cursor = 'default';
+    }
+  };
+
+  // Hide tooltip on any OrbitControls interaction (rotate, pan, zoom)
+  private onControlsStart = (): void => {
+    if (this.hoveredPlanet()) {
+      this.ngZone.run(() => this.hoveredPlanet.set(null));
     }
   };
 
