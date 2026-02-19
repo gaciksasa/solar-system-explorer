@@ -33,23 +33,6 @@
       </div>
     </div>
 
-    <div class="mobile-divider"></div>
-
-    <!-- Pan -->
-    <div class="mobile-group">
-      <span class="mobile-label">Pomeranje</span>
-      <div class="mobile-btns">
-        <button class="nav-btn" title="Levo"
-          (pointerdown)="startNav('panLeft')" (pointerup)="stopNav()" (pointerleave)="stopNav()">◀</button>
-        <button class="nav-btn" title="Gore"
-          (pointerdown)="startNav('panUp')" (pointerup)="stopNav()" (pointerleave)="stopNav()">▲</button>
-        <button class="nav-btn" title="Dole"
-          (pointerdown)="startNav('panDown')" (pointerup)="stopNav()" (pointerleave)="stopNav()">▼</button>
-        <button class="nav-btn" title="Desno"
-          (pointerdown)="startNav('panRight')" (pointerup)="stopNav()" (pointerleave)="stopNav()">▶</button>
-      </div>
-    </div>
-
   </div>
 
   @if (hoveredPlanet(); as hp) {
