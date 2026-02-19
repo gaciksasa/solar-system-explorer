@@ -8,14 +8,16 @@ Interaktivna 3D vizuelizacija Solarnog sistema u realnom vremenu, izgrađena na 
 
 ## Karakteristike
 
-- **3D vizuelizacija** — Sunce, 8 planeta, 3 komete, Asteroidni pojas i Ortov oblak
+- **3D vizuelizacija** — Sunce, 8 planeta, 12 meseca, 3 komete, Asteroidni pojas i Ortov oblak
 - **Keplerian orbite** — realni J2000 orbitalni elementi (ekscentricitet, nagib ekliptike, čvor)
 - **Newton-Raphson solver** — tačno rešavanje Keplerove jednačine (15 iteracija za komete visokog e)
 - **Komete sa repovima** — rep usmeren anti-solarno, dužina raste bliže Suncu
+- **12 poznatih meseca** — kruže na proporcionalnim udaljenostima od matičnih planeta (Mesec, Fobos, Dejmos, Io, Evropa, Ganimede, Kalisto, Enkelad, Titan, Titanija, Oberon, Triton)
+- **Dupli klik za zum** — automatski centrira i zumira na bilo koje telo (cubic ease-in-out animacija)
 - **Interaktivna kamera** — rotacija, pomicanje i zum mišem (OrbitControls)
 - **Hover & klik** — svim telima prikazuje tooltip i info panel sa podacima
 - **Retrogradno kretanje** — Venera, Uran i Halleyjeva kometa (inklinacija 162°)
-- **Simulacija brzine** — usporavanje/ubrzavanje vremena (0.5× do 64×)
+- **Simulacija brzine** — pauza ⏸, usporavanje i ubrzavanje vremena (0.5× do 64×)
 - **Srpski jezik** — svi nazivi i opisi na srpskom
 
 ## Arhitektura
@@ -87,7 +89,8 @@ ng serve
 | Pomicanje scene | Desni klik + prevlačenje |
 | Zum | Skrol točkić |
 | Detalji tela | Klik na planetu / pojas |
-| Brzina simulacije | Dugmad ◀◀ / ▶▶ u gornjem uglu |
+| Zum na telo | Dupli klik na planetu / mesec / kometu |
+| Brzina simulacije | Dugmad ◀◀ / ▶▶ u gornjem uglu (uključujući pauzu ⏸) |
 
 ## Tela u simulaciji
 
@@ -100,13 +103,30 @@ ng serve
 | Mars | Planeta | |
 | Asteroidni pojas | Pojas | 2.2–3.2 AJ, ~2 800 čestica |
 | Jupiter | Planeta | Najveća planeta |
-| Saturn | Planeta | Vidljivi prstenovi |
+| Saturn | Planeta | Vidljivi prstenovi (fiksirani nagib, ne rotiraju) |
 | Uran | Planeta | Retrogradno kretanje |
 | Neptun | Planeta | |
 | Ortov oblak | Hipotetički | Vidljiv samo na najmanjem zumu |
 | 1P/Halley | Kometa | Retrogradno (inc=162°), period 75.3 god., e=0.967 |
 | 2P/Encke | Kometa | Najkraći period (~3.3 god.), prolazi bliže Suncu od Merkura |
 | 67P/Čurjumov-Gerasimenko | Kometa | Cilj ESA misije Rozeta (2004–2016) |
+
+### Meseci
+
+| Mesec | Planeta | Napomena |
+|-------|---------|----------|
+| Mesec | Zemlja | Jedini prirodni satelit Zemlje |
+| Fobos | Mars | Unutrašnji, period 7.6h |
+| Dejmos | Mars | Spoljašnji, period 30.3h |
+| Io | Jupiter | Najvolkanskije telo u SS |
+| Evropa | Jupiter | Mogući podledeni okean |
+| Ganimede | Jupiter | Najveći mesec u SS |
+| Kalisto | Jupiter | Najstarija površina u SS |
+| Enkelad | Saturn | Gejziri vodene pare |
+| Titan | Saturn | Jedina atmosfera među mesecima |
+| Titanija | Uran | Najveći Uranov mesec |
+| Oberon | Uran | Drugi po veličini Uranov mesec |
+| Triton | Neptun | Retrogradno (inc=156.84°) |
 
 ## Licenca
 
