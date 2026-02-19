@@ -12,6 +12,7 @@ export interface Planet {
   is_star: boolean;
   is_asteroid_belt?: boolean;
   is_oort_cloud?: boolean;
+  is_comet?: boolean;
   // Keplerian orbital elements (J2000)
   eccentricity: number;    // 0 = circle
   inclination: number;     // degrees, relative to ecliptic

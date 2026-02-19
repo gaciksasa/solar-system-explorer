@@ -33,6 +33,31 @@
         <span class="stat-label">Poznata tela</span>
         <span class="stat-value satellites-list">Cerera, Vesta, Palada, Higija, Eros</span>
       </div>
+    } @else if (planet.is_comet) {
+      <div class="stat-row">
+        <span class="stat-label">Orbitalni period</span>
+        <span class="stat-value">{{ formatPeriod(planet.orbital_period) }}</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Perihelij</span>
+        <span class="stat-value">{{ perihelion(planet) }}</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Afelij</span>
+        <span class="stat-value">{{ aphelion(planet) }}</span>
+      </div>
+      <div class="stat-row stat-secondary">
+        <span class="stat-label">Nagib ekliptike</span>
+        <span class="stat-value">{{ formatInclination(planet.inclination) }}</span>
+      </div>
+      <div class="stat-row stat-secondary">
+        <span class="stat-label">Ekscentricitet</span>
+        <span class="stat-value">{{ planet.eccentricity | number: '1.3-5' }}</span>
+      </div>
+      <div class="stat-row stat-secondary">
+        <span class="stat-label">Prečnik jezgra</span>
+        <span class="stat-value">~{{ planet.radius }} km</span>
+      </div>
     } @else if (planet.is_oort_cloud) {
       <div class="stat-row">
         <span class="stat-label">Unutrašnji pojas</span>

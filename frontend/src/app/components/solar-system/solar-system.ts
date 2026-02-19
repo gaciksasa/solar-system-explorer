@@ -38,6 +38,20 @@ interface PlanetObject {
   sinInc: number;
 }
 
+interface CometObject {
+  planet: Planet;
+  mesh: THREE.Mesh;
+  tailGeo: THREE.BufferGeometry;
+  tailLine: THREE.Line;
+  hitMesh: THREE.Mesh;
+  glowMesh: THREE.Mesh;
+  perihelionVis: number;  // perihelion distance in visual units (tail scaling)
+  speed: number;
+  meanAnomaly: number;
+  a: number; b: number; e: number;
+  cosNode: number; sinNode: number; cosInc: number; sinInc: number;
+}
+
 @Component({
   selector: 'app-solar-system',
   standalone: true,
@@ -63,6 +77,7 @@ export class SolarSystem implements AfterViewInit, OnDestroy {
   private controls!: OrbitControls;
   private animationId!: number;
   private planetObjects: PlanetObject[] = [];
+  private cometObjects: CometObject[] = [];
   // All hit-detection meshes (invisible, larger than visual).
   // Used for both click and hover raycasting.
   private hitMeshes: THREE.Mesh[] = [];
@@ -125,11 +140,39 @@ export class SolarSystem implements AfterViewInit, OnDestroy {
     Neptune: 2.1,
   };
 
+  // Real J2000 orbital elements for famous comets.
+  // Eccentricity and inclination are NOT boosted — comet orbits are
+  // already visually dramatic (Halley e=0.967, retrograde inc=162°).
+  private readonly COMET_DEFS = [
+    {
+      name: 'Halley', nameSr: '1P/Halley', color: '#99ccff',
+      description: 'Halleyjeva kometa je najpoznatija periodična kometa, vidljiva golim okom svaka 75–76 godina. Ima retrogradno kretanje — kruži oko Sunca suprotno od planeta. Poslednji perihelij bio je 1986. godine; sledeći se očekuje 2061.',
+      a: 17.834, e: 0.96714, inc: 162.26, node: 58.42,
+      period: 75.32, radius: 11, rotPeriod: 2.2,
+      startFraction: 0.42,  // mean anomaly fraction 0–1 (position in orbit)
+    },
+    {
+      name: 'Encke', nameSr: '2P/Encke', color: '#aaffcc',
+      description: 'Enkejeva kometa ima najkraći poznati orbitalni period (~3.3 godine). Prolazi bliže Suncu od Merkura i izvor je Tauridnog meteorskog roja.',
+      a: 2.2179, e: 0.84823, inc: 11.78, node: 334.57,
+      period: 3.30, radius: 4.8, rotPeriod: 11.1,
+      startFraction: 0.10,
+    },
+    {
+      name: '67P', nameSr: '67P/Čurjumov-Gerasimenko', color: '#ffddaa',
+      description: 'Kometa 67P/Čurjumov-Gerasimenko postala je svetski poznata zahvaljujući ESA-inoj misiji Rozeta (2004–2016) — prvom svemirskom brodu koji je ušao u orbitu komete i sleteo na njenu površinu.',
+      a: 3.463, e: 0.641, inc: 7.04, node: 50.14,
+      period: 6.44, radius: 2.5, rotPeriod: 12.4,
+      startFraction: 0.25,
+    },
+  ] as const;
+
   ngAfterViewInit(): void {
     this.initScene();
     this.buildSolarSystem();
     this.createAsteroidBelt();
     this.createOortCloudHitSphere();
+    this.createComets();
     this.animate();
     window.addEventListener('resize', this.onResize);
   }
@@ -357,7 +400,8 @@ export class SolarSystem implements AfterViewInit, OnDestroy {
    */
   private createOrbitLine(
     a: number, b: number, e: number,
-    cosNode: number, sinNode: number, cosInc: number, sinInc: number
+    cosNode: number, sinNode: number, cosInc: number, sinInc: number,
+    color = 0x7788bb, opacity = 0.75,
   ): THREE.LineLoop {
     const N = 256;
     const pts: THREE.Vector3[] = [];
@@ -372,28 +416,41 @@ export class SolarSystem implements AfterViewInit, OnDestroy {
       ));
     }
     const geo = new THREE.BufferGeometry().setFromPoints(pts);
-    const mat = new THREE.LineBasicMaterial({ color: 0x7788bb, transparent: true, opacity: 0.75 });
+    const mat = new THREE.LineBasicMaterial({ color, transparent: true, opacity });
     return new THREE.LineLoop(geo, mat);
   }
 
   /**
-   * Convert mean anomaly M → 3D world position using Kepler's equation.
-   *
-   * Kepler's equation:  M = E − e·sin(E)
-   * Solved iteratively via Newton-Raphson (5 iterations → machine precision for e < 0.9).
+   * Newton-Raphson solver for Kepler's equation: M = E − e·sin(E).
+   * Uses 15 iterations for high eccentricities (comets), 5 for planets.
+   * Returns the 3D world position on the orbit.
    */
-  private keplerToWorld(obj: PlanetObject): THREE.Vector3 {
-    let E = obj.meanAnomaly;
-    for (let i = 0; i < 5; i++) {
-      E = E - (E - obj.e * Math.sin(E) - obj.meanAnomaly) / (1 - obj.e * Math.cos(E));
+  private solveKepler(
+    meanAnomaly: number, a: number, b: number, e: number,
+    cosNode: number, sinNode: number, cosInc: number, sinInc: number,
+  ): THREE.Vector3 {
+    const iters = e > 0.9 ? 15 : 5;
+    let E = meanAnomaly;
+    for (let i = 0; i < iters; i++) {
+      E = E - (E - e * Math.sin(E) - meanAnomaly) / (1 - e * Math.cos(E));
     }
-    const xOrb = obj.a * (Math.cos(E) - obj.e);
-    const yOrb = obj.b * Math.sin(E);
+    const xOrb = a * (Math.cos(E) - e);
+    const yOrb = b * Math.sin(E);
     return new THREE.Vector3(
-      obj.cosNode * xOrb - obj.sinNode * obj.cosInc * yOrb,
-      obj.sinInc * yOrb,
-      obj.sinNode * xOrb + obj.cosNode * obj.cosInc * yOrb,
+      cosNode * xOrb - sinNode * cosInc * yOrb,
+      sinInc * yOrb,
+      sinNode * xOrb + cosNode * cosInc * yOrb,
     );
+  }
+
+  private keplerToWorld(obj: PlanetObject): THREE.Vector3 {
+    return this.solveKepler(obj.meanAnomaly, obj.a, obj.b, obj.e,
+      obj.cosNode, obj.sinNode, obj.cosInc, obj.sinInc);
+  }
+
+  private keplerCometToWorld(obj: CometObject): THREE.Vector3 {
+    return this.solveKepler(obj.meanAnomaly, obj.a, obj.b, obj.e,
+      obj.cosNode, obj.sinNode, obj.cosInc, obj.sinInc);
   }
 
   private createAsteroidBelt(): void {
@@ -447,6 +504,93 @@ export class SolarSystem implements AfterViewInit, OnDestroy {
     this.hitMeshes.push(sphere);   // added last → lowest priority (nearest hit wins)
   }
 
+  private createComets(): void {
+    for (const def of this.COMET_DEFS) {
+      const planet: Planet = {
+        name: def.name,
+        name_sr: def.nameSr,
+        radius: def.radius,
+        distance_from_sun: def.a,   // AU (semi-major axis)
+        orbital_period: def.period * 365.25,
+        rotation_period: def.rotPeriod,
+        color: def.color,
+        description: def.description,
+        satellites: 0,
+        notable_satellites: [],
+        is_star: false,
+        is_comet: true,
+        eccentricity: def.e,
+        inclination: def.inc,
+        ascending_node: def.node,
+      };
+
+      // Orbital elements — no boost for comets (already dramatic)
+      const a = this.getOrbitRadius(def.a);
+      const e = def.e;
+      const b = a * Math.sqrt(1 - e * e);
+      const incRad  = (def.inc  * Math.PI) / 180;
+      const nodeRad = (def.node * Math.PI) / 180;
+      const cosNode = Math.cos(nodeRad);
+      const sinNode = Math.sin(nodeRad);
+      const cosInc  = Math.cos(incRad);
+      const sinInc  = Math.sin(incRad);
+
+      // Orbit line: dashed-style via low opacity purple tint
+      const orbitLine = this.createOrbitLine(a, b, e, cosNode, sinNode, cosInc, sinInc, 0x9977cc, 0.35);
+      this.scene.add(orbitLine);
+
+      // Nucleus (small glowing sphere)
+      const vr = 1.2;
+      const color = new THREE.Color(def.color);
+      const geo = new THREE.SphereGeometry(vr, 16, 16);
+      const mat = new THREE.MeshPhongMaterial({
+        color,
+        emissive: color,
+        emissiveIntensity: 1.0,
+        shininess: 20,
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.userData = { planet };
+      this.scene.add(mesh);
+
+      const glowMesh = this.makeGlowMesh(vr, color);
+      mesh.add(glowMesh);
+
+      const hitMesh = this.makeHitMesh(vr, planet, glowMesh);
+      this.scene.add(hitMesh);
+      this.hitMeshes.push(hitMesh);
+
+      // Tail: two vertices (comet-local origin + anti-solar offset)
+      const tailPositions = new Float32Array([0, 0, 0, 0, 0, 0]);
+      const tailGeo = new THREE.BufferGeometry();
+      tailGeo.setAttribute('position', new THREE.BufferAttribute(tailPositions, 3));
+      const tailMat = new THREE.LineBasicMaterial({
+        color: def.color,
+        transparent: true,
+        opacity: 0.65,
+      });
+      const tailLine = new THREE.Line(tailGeo, tailMat);
+      this.scene.add(tailLine);
+
+      const perihelionVis = a * (1 - e);
+      const speed = (1 / def.period) * 0.006; // same frame-rate factor as planets
+      const meanAnomaly = def.startFraction * Math.PI * 2;
+
+      const obj: CometObject = {
+        planet, mesh, tailGeo, tailLine, hitMesh, glowMesh,
+        perihelionVis, speed, meanAnomaly,
+        a, b, e, cosNode, sinNode, cosInc, sinInc,
+      };
+
+      const initPos = this.keplerCometToWorld(obj);
+      mesh.position.copy(initPos);
+      hitMesh.position.copy(initPos);
+      tailLine.position.copy(initPos);
+
+      this.cometObjects.push(obj);
+    }
+  }
+
   private animate = (): void => {
     this.animationId = requestAnimationFrame(this.animate);
 
@@ -481,6 +625,32 @@ export class SolarSystem implements AfterViewInit, OnDestroy {
       const sunDist = this.camera.position.distanceTo(this._tmpVec);
       const sunHitR = (HIT_PX / halfH) * sunDist * tanHalfFov;
       this.sunHitMesh.scale.setScalar(sunHitR / this.HIT_RADIUS);
+    }
+
+    // ── Comets ─────────────────────────────────────────────────────────────────
+    for (const obj of this.cometObjects) {
+      obj.meanAnomaly += obj.speed * speed;
+      const pos = this.keplerCometToWorld(obj);
+      obj.mesh.position.copy(pos);
+      obj.hitMesh.position.copy(pos);
+      obj.mesh.rotation.y += 0.003;
+
+      // Screen-space hit sphere (same formula as planets)
+      const cometDist = this.camera.position.distanceTo(pos);
+      const cometHitR = (HIT_PX / halfH) * cometDist * tanHalfFov;
+      obj.hitMesh.scale.setScalar(cometHitR / this.HIT_RADIUS);
+
+      // Tail: anti-solar direction, length ∝ proximity to sun
+      const distFromSun = pos.length();
+      // Tail disappears beyond ~3× perihelion distance
+      const tailLength = 55 * Math.exp(-distFromSun / (3 * obj.perihelionVis));
+      const antiSolar = pos.clone().normalize().multiplyScalar(tailLength);
+
+      const tailAttr = obj.tailGeo.attributes['position'] as THREE.BufferAttribute;
+      tailAttr.setXYZ(0, 0, 0, 0);                        // nucleus (local origin)
+      tailAttr.setXYZ(1, antiSolar.x, antiSolar.y, antiSolar.z); // tail end
+      tailAttr.needsUpdate = true;
+      obj.tailLine.position.copy(pos);
     }
 
     if (this.asteroidBelt) {
