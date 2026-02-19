@@ -8,12 +8,13 @@ Interaktivna 3D vizuelizacija Solarnog sistema u realnom vremenu, izgrađena na 
 
 ## Karakteristike
 
-- **3D vizuelizacija** — Sunce, 8 planeta, Asteroidni pojas i Ortov oblak
+- **3D vizuelizacija** — Sunce, 8 planeta, 3 komete, Asteroidni pojas i Ortov oblak
 - **Keplerian orbite** — realni J2000 orbitalni elementi (ekscentricitet, nagib ekliptike, čvor)
-- **Newton-Raphson solver** — tačno rešavanje Keplerove jednačine za poziciju planete
+- **Newton-Raphson solver** — tačno rešavanje Keplerove jednačine (15 iteracija za komete visokog e)
+- **Komete sa repovima** — rep usmeren anti-solarno, dužina raste bliže Suncu
 - **Interaktivna kamera** — rotacija, pomicanje i zum mišem (OrbitControls)
 - **Hover & klik** — svim telima prikazuje tooltip i info panel sa podacima
-- **Retrogradno kretanje** — Venera i Uran se vrte u suprotnom smeru
+- **Retrogradno kretanje** — Venera, Uran i Halleyjeva kometa (inklinacija 162°)
 - **Simulacija brzine** — usporavanje/ubrzavanje vremena (0.5× do 64×)
 - **Srpski jezik** — svi nazivi i opisi na srpskom
 
@@ -75,7 +76,7 @@ ng serve
 |------|------------|
 | Backend | Go 1.22, Gin, gin-contrib/cors |
 | Frontend | Angular 19 (standalone), Three.js, Angular Signals |
-| Fizika | Keplerian orbital mechanics, Newton-Raphson solver |
+| Fizika | Keplerian orbital mechanics, Newton-Raphson solver (visoka e) |
 | Orbitalni podaci | NASA J2000 elementi (ekscentricitet, inklinacija, čvor uzlazišta) |
 
 ## Kontrole
@@ -103,6 +104,9 @@ ng serve
 | Uran | Planeta | Retrogradno kretanje |
 | Neptun | Planeta | |
 | Ortov oblak | Hipotetički | Vidljiv samo na najmanjem zumu |
+| 1P/Halley | Kometa | Retrogradno (inc=162°), period 75.3 god., e=0.967 |
+| 2P/Encke | Kometa | Najkraći period (~3.3 god.), prolazi bliže Suncu od Merkura |
+| 67P/Čurjumov-Gerasimenko | Kometa | Cilj ESA misije Rozeta (2004–2016) |
 
 ## Licenca
 
